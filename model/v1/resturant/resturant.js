@@ -19,7 +19,7 @@ var resturant = {
                 var id = result.insertId;
                 resturant.getRestDetail(id, function (resturant_data) {
                     // common.sendEmail(request.email, "Welcome to Hotel", `<h4>${request.first_name}You are signup successfully in Hotel</h4>`, function (isSent) {
-                        callback('1', 'Resturant add successfull', resturant_data);
+                    callback('1', 'Resturant add successfull', resturant_data);
                     // })
                 })
             } else {
@@ -28,31 +28,45 @@ var resturant = {
         })
     },
 
-    getRestDetail: function(id,callback){
-        con.query(`SELECT * FROM tbl_restaurant WHERE id = ?`,[id],function(error,result){
-            if(!error && result.length > 0){
+    getRestDetail: function (id, callback) {
+        con.query(`SELECT * FROM tbl_restaurant WHERE id = ?`, [id], function (error, result) {
+            if (!error && result.length > 0) {
                 callback(result);
-            }else{
+            } else {
                 callback(null);
             }
         })
     },
 
-    restuarantListing: function(request,callback){
-        con.query(`SELECT r.*,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r`, function(error,result){
-            if(!error){
-                callback("1","success",result);
-            }else{
-                callback("0","failed",null);
+    restuarantListing: function (request, callback) {
+        con.query(`SELECT r.*,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r`, function (error, result) {
+            if (!error) {
+                callback("1", "success", result);
+            } else {
+                callback("0", "failed", null);
             }
         })
     },
 
-    restuarantRating: function(request,callback){
+    restuarantRating: function (request, callback) {
+
+        var resturantRAting = {
+            resturant_id: request.resturant_id,
+            user_id: request.user_id,
+            rasturant_rating: request.rasturant_rating
+        }
+
+        con.query(`INSERT INTO tbl_restuarant_rating SET ?`,[resturantRAting], function(error, result){
+            if(!error){
+                callback("1","rating add",result)
+            }else{
+                callback("0","something went wrong",null)
+            }
+        })
 
         // var sql = `UPDATE tbl_restaurant r SET r.total_review = (SELECT COUNT(id) FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id),(SELECT AVG(rr.rasturant_rating) FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id) WHERE id =(SELECT rr.resturant_id FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id)`
-        
-        con.query(sql,)
+
+        // con.query(sql,)
         // UPDATE tbl_place p SET p.avg_rating = (SELECT AVG(pr.place_rating) FROM tbl_place_rating pr WHERE pr.place_id = p.id) WHERE id = new.place_id
         // UPDATE tbl_place p SET p.rating_count = (SELECT COUNT(id) FROM tbl_place_rating pr WHERE pr.place_id = p.id) WHERE id = new.place_id
     }

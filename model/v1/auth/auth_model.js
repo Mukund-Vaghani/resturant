@@ -138,8 +138,7 @@ var auth = {
             }
         })
     },
-
-    // reset password
+    
     resetpassword: function (request, id, callback) {
         // console.log("authmodel",request);
         var onetime = {

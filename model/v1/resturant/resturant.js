@@ -1,5 +1,6 @@
 const common = require('../../../config/common');
 var con = require('../../../config/database');
+var asyncLoop = require('node-async-loop');
 
 var resturant = {
 
@@ -29,8 +30,9 @@ var resturant = {
     },
 
     getRestDetail: function (id, callback) {
-        con.query(`SELECT * FROM tbl_restaurant WHERE id = ?`, [id], function (error, result) {
+        con.query(`SELECT r.*,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r WHERE r.id = ?`, [id], function (error, result) {
             if (!error && result.length > 0) {
+                console.log(result);
                 callback(result);
             } else {
                 callback(null);
@@ -49,26 +51,86 @@ var resturant = {
     },
 
     restuarantRating: function (request, callback) {
-
-        var resturantRAting = {
+        // console.log(request);
+        var resturantRating = {
             resturant_id: request.resturant_id,
             user_id: request.user_id,
             rasturant_rating: request.rasturant_rating
         }
 
-        con.query(`INSERT INTO tbl_restuarant_rating SET ?`,[resturantRAting], function(error, result){
-            if(!error){
-                callback("1","rating add",result)
-            }else{
-                callback("0","something went wrong",null)
+        con.query(`INSERT INTO tbl_restuarant_rating SET ?`, [resturantRating], function (error, result) {
+            if (!error) {
+                con.query(`UPDATE tbl_restaurant SET total_review = (SELECT COUNT(id) FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id),average_rating = (SELECT AVG(rasturant_rating) FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id) WHERE id = (SELECT resturant_id FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id LIMIT 1)`)
+                callback("1", "rating add", result);
+            } else {
+                console.log(error);
+                callback("0", "rating not add, Pls try againe later", null)
             }
         })
+    },
 
-        // var sql = `UPDATE tbl_restaurant r SET r.total_review = (SELECT COUNT(id) FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id),(SELECT AVG(rr.rasturant_rating) FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id) WHERE id =(SELECT rr.resturant_id FROM tbl_restuarant_rating rr WHERE rr.resturant_id = r.id)`
+    addFood: function (request, callback) {
+        var updFood = {
+            restaurant_id: request.restaurant_id,
+            category_id: request.category_id,
+            name: request.name,
+            image: request.image,
+            description: request.description,
+            prize: request.prize,
+            quantity: request.quantity
+        }
 
-        // con.query(sql,)
-        // UPDATE tbl_place p SET p.avg_rating = (SELECT AVG(pr.place_rating) FROM tbl_place_rating pr WHERE pr.place_id = p.id) WHERE id = new.place_id
-        // UPDATE tbl_place p SET p.rating_count = (SELECT COUNT(id) FROM tbl_place_rating pr WHERE pr.place_id = p.id) WHERE id = new.place_id
+        con.query(`INSERT INTO tbl_food SET ?`, [updFood], function (error, result) {
+            if (!error) {
+                callback("1", "Your food is add", result);
+            } else {
+                console.log(error);
+                callback("0", "food not add, Pls try againe later", null);
+            }
+        })
+    },
+
+    resDetail: function (request, callback) {
+        resturant.getRestDetail(request.id, function (result) {
+            if (result.length > 0) {
+
+                con.query(`SELECT f.category_id,ft.food_type FROM tbl_food f JOIN tbl_food_type ft ON f.category_id = ft.id WHERE restaurant_id = ? GROUP BY category_id;`,[request.id],function(error,category){
+
+                    if(!error){
+                        result[0].category = category
+                        asyncLoop(category, function(item,next){
+
+                            con.query(`SELECT * FROM tbl_food as tf WHERE tf.restaurant_id =? AND category_id = ? GROUP BY tf.id`,[request.id,item.category_id], function(error,foodName){
+
+                                if(!error){
+                                    item.foodName = foodName;
+                                    next();
+                                }else{
+                                    next()
+                                }
+                            })
+                        },()=>{
+                            callback("1","success", result[0]);
+                        })
+                    }else{
+                        callback("0","data not found",null);
+                    }
+                })
+            } else {
+                callback("0", "something went wrong", null);
+            }
+        })
+    },
+
+    searchItem: function(request,callback){
+        con.query(`SELECT r.name as restaurant_name, f.name as food_name FROM tbl_restaurant r JOIN tbl_food f ON r.id = f.restaurant_id  WHERE r.name LIKE '%${request.name}%' OR f.name LIKE '%${request.name}%'`,function(error,result){
+            if(!error){
+                callback("1","success",result);
+            }else{
+                console.log(error);
+                callback("0","search fail",null);
+            }
+        })
     }
 }
 

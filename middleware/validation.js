@@ -43,6 +43,64 @@ var middleware = {
             }
     },
 
+    validateApiKey: function (req, res, callback) {
+        // bypass of api key
+        var end_point = req.path.split('/');
+        var uni_end_point = new Array("resetform", "resetpass")
+
+        var api_key = (req.headers['api-key'] != undefined && req.headers['api-key'] != "") ? req.headers['api-key'] : "";
+        if (uni_end_point.includes(end_point[end_point.length - 2])) {
+            callback();
+        } else {
+            if (api_key != "" && api_key == process.env.API_KEY) {
+                callback()
+            } else {
+                var response_data = {
+                    code: '0',
+                    message: 'Invalid API Key'
+                }
+                res.status(401);
+                res.send(response_data);
+            }
+        }
+    },
+
+    validateUserToken: function (req, res, callback) {
+        var end_point = req.path.split('/');
+        var uni_end_point = new Array("login", "signup","validate","resetform", "resetpass","addresturant","addfood");
+
+        var valid_token = (req.headers['token'] != undefined && req.headers['token'] != "") ? req.headers['token'] : "";
+
+        // console.log(valid_token);
+        // console.log(uni_end_point.indexOf(end_point[4])=='-1');
+        if (uni_end_point.includes(end_point[4])) {
+            callback();
+        } else {
+            if (valid_token != "") {
+                con.query(`SELECT * FROM tbl_user_deviceinfo WHERE token = ?`, [valid_token], function (error, result) {
+                    if (!error && result.length > 0) {
+                        req.user_id = result[0].user_id;
+                        callback()
+                    } else {
+                        var response_data = {
+                            code: '0',
+                            message: 'Invalid User token'
+                        }
+                        res.status(401);
+                        res.send(response_data);
+                    }
+                })
+            } else {
+                var response_data = {
+                    code: '0',
+                    message: 'Invalid User token'
+                }
+                res.status(401);
+                res.send(response_data);
+            }
+        }
+    }
+
 }
 
 module.exports = middleware;

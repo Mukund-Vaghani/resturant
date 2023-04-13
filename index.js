@@ -11,8 +11,8 @@ var auth = require('./model/v1/auth/route');
 var resturant = require('./model/v1/resturant/route');
 
 
-// app.use('/',require('./middleware/middleware').validateApiKey);
-// app.use('/',require('./middleware/middleware').validateUserToken);
+app.use('/',require('./middleware/validation').validateApiKey);
+app.use('/',require('./middleware/validation').validateUserToken);
 
 app.use('/api/v1/auth',auth);
 app.use('/api/v1/resturant',resturant);

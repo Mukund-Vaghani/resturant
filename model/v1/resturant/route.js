@@ -53,4 +53,54 @@ router.post('/addreting', function (req, res) {
     }
 })
 
+router.post('/addfood',function(req,res){
+    var request = req.body;
+
+    var rules = {
+        restaurant_id:'required',
+        category_id:'required',
+        name:'required',
+        image:'required',
+        description:'required',
+        prize:'required',
+        quantity:'required'
+    }
+
+    var message = {
+        require: 'You forgot the :attr field'
+    }
+
+    if(middleware.checkValidationRules(res,request,rules,message)){
+        auth.addFood(request,function(code,message,data){
+            middleware.send_response(req,res,code,message,data);
+        })
+    }
+})
+
+router.post('/resdetail',function(req,res){
+    var request = req.body;
+
+    var rules = {
+        id: 'required'
+    }
+
+    var message ={
+        require:'You forgot the :attr field'
+    }
+
+    if(middleware.checkValidationRules(res,request,rules,message)){
+        auth.resDetail(request,function(code,message,data){
+            middleware.send_response(req,res,code,message,data);
+        })
+    }
+
+})
+
+router.post('/search', function(req,res){
+    var request = req.body
+    auth.searchItem(request,function(code,message,data){
+        middleware.send_response(req,res,code,message,data);
+    })
+})
+
 module.exports = router;

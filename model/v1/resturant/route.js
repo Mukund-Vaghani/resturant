@@ -2,7 +2,38 @@ var express = require('express');
 const { request } = require('http');
 var router = express.Router();
 var middleware = require('../../../middleware/validation');
+var multer = require('multer');
+var path = require('path');
 var auth = require('./resturant')
+
+
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'public/user')
+    },
+    filename: function (req, file, cb) {
+        0
+        cb(null, Date.now() + path.extname(file.originalname))
+    }
+});
+
+var upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: (12 * 1024 * 1024)
+    }
+}).single('profile');
+
+
+router.post('/uploadrestpicture', function (req, res) {
+    upload(req, res, function (error) {
+        if (error) {
+            middleware.send_response(req, res, "0", "fail to upload restaurant image", null);
+        } else {
+            middleware.send_response(req, res, "1", "upload success", { image: req.file.fieldname });
+        }
+    })
+})
 
 
 router.post('/addresturant', function (req, res) {
@@ -17,7 +48,7 @@ router.post('/addresturant', function (req, res) {
     }
 
     var message = {
-        require: 'You forgot the :attr field'
+        require: req.language.reset_keyword_required_message
     }
 
     if (middleware.checkValidationRules(res, request, rules, message)) {
@@ -29,7 +60,9 @@ router.post('/addresturant', function (req, res) {
 
 router.get('/restuarantlisting', function (req, res) {
     var request = req.body;
-    auth.restuarantListing(request, function (code, message, data) {
+    var page = req.query.page;
+    var limit = req.query.limit;
+    auth.restuarantListing(page, limit, function (code, message, data) {
         middleware.send_response(req, res, code, message, data);
     })
 });
@@ -44,7 +77,7 @@ router.post('/addreting', function (req, res) {
     }
 
     var message = {
-        require: 'You forgot the :attr field'
+        require: req.language.reset_keyword_required_message
     }
     if (middleware.checkValidationRules(res, request, rules, message)) {
         auth.restuarantRating(request, function (code, message, data) {
@@ -67,7 +100,7 @@ router.post('/addfood',function(req,res){
     }
 
     var message = {
-        require: 'You forgot the :attr field'
+        require: req.language.reset_keyword_required_message
     }
 
     if(middleware.checkValidationRules(res,request,rules,message)){
@@ -85,7 +118,7 @@ router.post('/resdetail',function(req,res){
     }
 
     var message ={
-        require:'You forgot the :attr field'
+        require:req.language.reset_keyword_required_message
     }
 
     if(middleware.checkValidationRules(res,request,rules,message)){

@@ -10,7 +10,7 @@ app.set('view engine','html');
 var auth = require('./model/v1/auth/route');
 var resturant = require('./model/v1/resturant/route');
 
-
+app.use('/', require('./middleware/validation').extractheaderlanguage)
 app.use('/',require('./middleware/validation').validateApiKey);
 app.use('/',require('./middleware/validation').validateUserToken);
 

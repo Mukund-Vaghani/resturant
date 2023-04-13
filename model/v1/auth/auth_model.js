@@ -7,14 +7,14 @@ var auth = {
 
         auth.checkUserEmail(request, function (isExist) {
             if (isExist) {
-                callback('0', "Email already exist", null);
+                callback('0', "reset_keyword_unique_email_message", null);
             } else {
                 var otp_code = common.randomeOTPGenerator();
                 common.sendEmail(request.email, "email Verification", `<h4>Your OTP is : <h1>${otp_code}</h1></h4>`, function (isSent) {
                     if (isSent) {
-                        callback("1", "OTP send successfully", otp_code)
+                        callback("1", "reset_keyword_otp_send", otp_code)
                     } else {
-                        callback("0", "something went wrong", null);
+                        callback("0", "reset_keyword_something_wrong_message", null);
                     }
                 })
             }
@@ -43,16 +43,16 @@ var auth = {
                         auth.getUserDetail(id, function (user_data) {
                             user_data[0].token = token;
                             common.sendEmail(request.email, "Welcome to Hotel", `<h4>${request.first_name}You are signup successfully in Hotel</h4>`, function (isSent) {
-                                callback('1', 'user add successfull', user_data);
+                                callback('1', 'reset_keyword_add_message', user_data);
                             })
                         })
                     } else {
-                        callback("0", 'something went wrong', error);
+                        callback("0", 'reset_keyword_something_wrong_message', error);
                     }
                 })
             } else {
                 console.log(error);
-                callback('0', "something went wrong", null);
+                callback('0', "reset_keyword_something_wrong_message", null);
             }
         })
     },
@@ -68,21 +68,21 @@ var auth = {
                                     var id = result[0].id;
                                     common.checkUpdateToken(id, request, function (token) {
                                         result[0].token = token;
-                                        callback("1", "user login successfully", result);
+                                        callback("1", "reset_keyword_login_message", result);
                                     });
                                 } else {
-                                    callback("0", "login failed", null);
+                                    callback("0", "reset_keyword_login_faile_message", null);
                                 }
                             })
                         } else {
-                            callback("0", "login failed", null);
+                            callback("0", "reset_keyword_login_faile_message", null);
                         }
                     } else {
-                        callback("0", "something went wrong", null);
+                        callback("0", "reset_keyword_something_wrong_message", null);
                     }
                 })
             } else {
-                callback("0", "You have to signin first", null)
+                callback("0", "reset_keyword_sigup_first", null)
             }
         })
     },
@@ -149,7 +149,7 @@ var auth = {
                 callback("1", "reset_keyword_success_message", null);
             } else {
                 console.log(error);
-                callback('0', 'something went wrong , please try again later', error)
+                callback('0', 'reset_keyword_something_wrong_message', error)
             }
         })
     },

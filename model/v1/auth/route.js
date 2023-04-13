@@ -18,8 +18,8 @@ router.post('/signup',function(req,res){
     }
 
     var message ={
-        require:'You forgot the :attr field',
-        email:'email is not valid'
+        require:req.language.reset_keyword_required_message,
+        email:req.language.reset_keyword_invalid_email_message
     }
 
     if(middleware.checkValidationRules(res, request, rules,message)){
@@ -38,7 +38,7 @@ router.post('/validate',function(req,res){
     }
 
     var message = {
-        require: 'You forgot the :attr field'
+        require: req.language.reset_keyword_required_message
     }
 
     if(middleware.checkValidationRules(res,request,rules,message)){
@@ -56,7 +56,8 @@ router.post('/login',function(req,res){
      }
 
      var message = {
-        require: 'You forgot the :attr field'
+        require: req.language.reset_keyword_required_message,
+        email:req.language.reset_keyword_invalid_email_message
      }
 
      if(middleware.checkValidationRules(res,request,rules,message)){
@@ -82,13 +83,13 @@ router.get('/resetform/:id', function (req, res) {
                 if (userdata[0].is_forgot == '1') {
                     res.render('forgotpass.html', { id: req.params.id });
                 } else {
-                    res.send("your link is already used");
+                    res.send(req.language.reset_keyword_link_used);
                 }
             } else {
-                res.send("your link is expired");
+                res.send(req.language.reset_keyword_link_expired);
             }
         } else {
-            console.log('error');
+            console.log(req.language.reset_keyword_something_wrong_message);
         }
     })
 })
@@ -103,7 +104,7 @@ router.post('/resetpass/:id', function (req, res) {
                 middleware.send_response(req, res, code, message, data);
             })
         }else{
-            res.send("link is already used");
+            res.send(req.language.reset_keyword_link_used);
         }
     })
 })

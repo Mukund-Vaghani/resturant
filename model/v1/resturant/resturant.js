@@ -1,5 +1,6 @@
 const common = require('../../../config/common');
 var con = require('../../../config/database');
+var global = require('../../../config/constant');
 var asyncLoop = require('node-async-loop');
 
 var resturant = {
@@ -20,11 +21,11 @@ var resturant = {
                 var id = result.insertId;
                 resturant.getRestDetail(id, function (resturant_data) {
                     // common.sendEmail(request.email, "Welcome to Hotel", `<h4>${request.first_name}You are signup successfully in Hotel</h4>`, function (isSent) {
-                    callback('1', 'Resturant add successfull', resturant_data);
+                    callback('1', 'reset_keyword_success_message', resturant_data);
                     // })
                 })
             } else {
-                callback("0", 'something went wrong', error);
+                callback("0", 'reset_keyword_something_wrong_message', error);
             }
         })
     },
@@ -40,12 +41,12 @@ var resturant = {
         })
     },
 
-    restuarantListing: function (request, callback) {
-        con.query(`SELECT r.*,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r`, function (error, result) {
+    restuarantListing: function (page, limit, callback) {
+        con.query(`SELECT r.*,concat('${global.BASE_URL}','${global.REST_URL}',r.image) as image_url,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r LIMIT ${page} OFFSET ${((page-1)*limit)}`, function (error, result) {
             if (!error) {
-                callback("1", "success", result);
+                callback("1", "reset_keyword_success_message", result);
             } else {
-                callback("0", "failed", null);
+                callback("0", "failed", error);
             }
         })
     },
@@ -61,7 +62,7 @@ var resturant = {
         con.query(`INSERT INTO tbl_restuarant_rating SET ?`, [resturantRating], function (error, result) {
             if (!error) {
                 con.query(`UPDATE tbl_restaurant SET total_review = (SELECT COUNT(id) FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id),average_rating = (SELECT AVG(rasturant_rating) FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id) WHERE id = (SELECT resturant_id FROM tbl_restuarant_rating WHERE resturant_id = tbl_restaurant.id LIMIT 1)`)
-                callback("1", "rating add", result);
+                callback("1", "reset_keyword_add_message", result);
             } else {
                 console.log(error);
                 callback("0", "rating not add, Pls try againe later", null)
@@ -82,7 +83,7 @@ var resturant = {
 
         con.query(`INSERT INTO tbl_food SET ?`, [updFood], function (error, result) {
             if (!error) {
-                callback("1", "Your food is add", result);
+                callback("1", "reset_keyword_add_message", result);
             } else {
                 console.log(error);
                 callback("0", "food not add, Pls try againe later", null);
@@ -110,14 +111,14 @@ var resturant = {
                                 }
                             })
                         },()=>{
-                            callback("1","success", result[0]);
+                            callback("1","reset_keyword_success_message", result[0]);
                         })
                     }else{
-                        callback("0","data not found",null);
+                        callback("0","reset_keyword_data_not_found",null);
                     }
                 })
             } else {
-                callback("0", "something went wrong", null);
+                callback("0", "reset_keyword_something_wrong_message", null);
             }
         })
     },
@@ -125,10 +126,10 @@ var resturant = {
     searchItem: function(request,callback){
         con.query(`SELECT r.name as restaurant_name, f.name as food_name FROM tbl_restaurant r JOIN tbl_food f ON r.id = f.restaurant_id  WHERE r.name LIKE '%${request.name}%' OR f.name LIKE '%${request.name}%'`,function(error,result){
             if(!error){
-                callback("1","success",result);
+                callback("1","reset_keyword_success_message",result);
             }else{
                 console.log(error);
-                callback("0","search fail",null);
+                callback("0","reset_keyword_data_not_found",null);
             }
         })
     }

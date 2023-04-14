@@ -6,13 +6,11 @@ var multer = require('multer');
 var path = require('path');
 var auth = require('./resturant')
 
-
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, 'public/user')
+        cb(null, '../resturant/public/rest')
     },
     filename: function (req, file, cb) {
-        0
         cb(null, Date.now() + path.extname(file.originalname))
     }
 });
@@ -22,18 +20,21 @@ var upload = multer({
     limits: {
         fileSize: (12 * 1024 * 1024)
     }
-}).single('profile');
+}).single('rest_image');
 
 
 router.post('/uploadrestpicture', function (req, res) {
     upload(req, res, function (error) {
         if (error) {
+            console.log(error);
             middleware.send_response(req, res, "0", "fail to upload restaurant image", null);
         } else {
-            middleware.send_response(req, res, "1", "upload success", { image: req.file.fieldname });
+            middleware.send_response(req, res, "1", "upload success", { image: req.file.filename });
         }
     })
 })
+
+
 
 
 router.post('/addresturant', function (req, res) {
@@ -135,5 +136,7 @@ router.post('/search', function(req,res){
         middleware.send_response(req,res,code,message,data);
     })
 })
+
+
 
 module.exports = router;

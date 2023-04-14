@@ -42,7 +42,7 @@ var resturant = {
     },
 
     restuarantListing: function (page, limit, callback) {
-        con.query(`SELECT r.*,concat('${global.BASE_URL}','${global.REST_URL}',r.image) as image_url,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r LIMIT ${page} OFFSET ${((page-1)*limit)}`, function (error, result) {
+        con.query(`SELECT r.*,concat('${global.BASE_URL}','${global.REST_URL}',r.image) as image_url,case when (current_time() between r.open_time and r.close_time) then 'open' else 'close'end as status FROM tbl_restaurant r`, function (error, result) {
             if (!error) {
                 callback("1", "reset_keyword_success_message", result);
             } else {

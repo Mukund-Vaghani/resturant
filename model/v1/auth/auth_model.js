@@ -63,18 +63,27 @@ var auth = {
                 con.query(`SELECT * FROM tbl_user WHERE email = ?`, [request.email], function (error, result) {
                     if (result[0].verification_status == 'verified') {
                         if (!error && result.length > 0) {
-                            common.sendEmail(request.email, "Login to Hotel", `${result[0].first_name} login successfully`, function (isSent) {
-                                if (isSent) {
-                                    var id = result[0].id;
-                                    common.checkUpdateToken(id, request, function (token) {
-                                        result[0].token = token;
-                                        callback("1", "reset_keyword_login_message", result);
-                                    });
+                            auth.loginStatusUpdate(result[0].id, function (isUpdate) {
+                                if (isUpdate) {
+                                    common.sendEmail(request.email, "Login to Hotel", `${result[0].first_name} login successfully`, function (isSent) {
+                                        if (isSent) {
+                                            var id = result[0].id;
+                                            common.checkUpdateToken(id, request, function (token) {
+                                                result[0].login_status = "online";
+                                                result[0].token = token;
+                                                callback("1", "reset_keyword_login_message", result);
+                                            });
+                                        } else {
+                                            console("BBBB", error)
+                                            callback("0", "reset_keyword_login_faile_message", null);
+                                        }
+                                    })
                                 } else {
-                                    callback("0", "reset_keyword_login_faile_message", null);
+                                    callback("0", "status not update", null)
                                 }
                             })
                         } else {
+                            console.log("CCCCCC", error)
                             callback("0", "reset_keyword_login_faile_message", null);
                         }
                     } else {
@@ -138,7 +147,7 @@ var auth = {
             }
         })
     },
-    
+
     resetpassword: function (request, id, callback) {
         // console.log("authmodel",request);
         var onetime = {
@@ -154,6 +163,44 @@ var auth = {
         })
     },
 
+    logoutUser: function (request, callback) {
+        var id = request.user_id;
+        var upddata = {
+            token: "",
+            device_token: ""
+        }
+        con.query(`UPDATE tbl_user_deviceinfo SET ? WHERE user_id = ?`, [upddata, id], function (error, result) {
+            if (!error) {
+                var loginstatus = {
+                    login_status: "offline"
+                }
+                con.query(`UPDATE tbl_user SET ? WHERE id = ?`, [loginstatus, id], function (error, result) {
+                    if (!error) {
+                        callback('1', "log out", null);
+                    } else {
+                        callback("0", "something went wrong", null);
+                    }
+                })
+                // callback("1","logo out",null)
+            } else {
+                console.log(error)
+                callback("0", "log out failed", null)
+            }
+        })
+    },
+
+    loginStatusUpdate: function (id, callback) {
+        var loginstatus = {
+            login_status: "online"
+        }
+        con.query(`UPDATE tbl_user SET ? WHERE id = ?`, [loginstatus, id], function (error, result) {
+            if (!error) {
+                callback(true);
+            } else {
+                callback(false);
+            }
+        })
+    }
 }
 
 module.exports = auth;

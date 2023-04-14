@@ -1,5 +1,5 @@
 var global = {
-    BASE_URL : "http://localhost:8189/api/",
+    BASE_URL : "http://localhost/Task/resturant/",
     USER_URL : "public/user/",
     REST_URL : "public/rest/"
 }

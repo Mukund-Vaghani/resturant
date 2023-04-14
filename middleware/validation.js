@@ -4,6 +4,8 @@ const en = require('../language/en');
 const gu = require('../language/gu');
 var { t } = require('localizify');
 var con = require('../config/database');
+var cryptoLib = require('cryptlib')
+var shakey = cryptoLib.getHashSha256(process.env.KEY,32)
 
 var middleware = {
 
@@ -34,8 +36,10 @@ var middleware = {
                     code: code,
                     message: trans_message
                 }
-                res.status(200);
-                res.send(response_data);
+                middleware.encryption(response_data, function(response){
+                    res.status(200);
+                    res.send(response_data);
+                })
             } else {
                 console.log(data);
                 var response_data = {
@@ -43,8 +47,10 @@ var middleware = {
                     message: trans_message,
                     data: data
                 }
-                res.status(200);
-                res.send(response_data);
+                middleware.encryption(response_data, function(response){
+                    res.status(200);
+                    res.send(response_data);
+                })
             }
         })
     },
@@ -124,6 +130,26 @@ var middleware = {
                 res.send(response_data);
             }
         }
+    },
+
+
+    decryption: function(req,callback){
+        if(req != undefined && Object.keys(req).length !== 0){
+            try{
+                var request = JSON.parse(cryptoLib.decrypt(req,shakey,process.env.IV));
+                request.lang = req.lang;
+                callback(request);
+            }catch{
+                callback({});
+            }
+        }else{
+            callback({});
+        }
+    },
+
+    encryption: function(req,callback){
+        var response = cryptoLib.encrypt(JSON.stringify(response_data),shakey,process.env.IV);
+        callback(response);
     }
 
 }

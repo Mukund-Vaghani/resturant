@@ -7,29 +7,28 @@ var path = require('path');
 
 router.post('/signup', function (req, res) {
 
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
+        var rules = {
+            login_type: 'required',
+            social_id: '',
+            email: 'required|email',
+            first_name: 'required',
+            last_name: 'required',
+            mobile_number: 'required',
+            password: 'required'
+        }
 
-    var rules = {
-        login_type: 'required',
-        social_id: '',
-        email: 'required|email',
-        first_name: 'required',
-        last_name: 'required',
-        mobile_number: 'required',
-        password: 'required'
-    }
+        var message = {
+            require: req.language.reset_keyword_required_message,
+            email: req.language.reset_keyword_invalid_email_message
+        }
 
-    var message = {
-        require: req.language.reset_keyword_required_message,
-        email: req.language.reset_keyword_invalid_email_message
-    }
-
-    if (middleware.checkValidationRules(res, request, rules, message)) {
-        auth.signup(request, function (code, message, data) {
-            middleware.send_response(req, res, code, message, data);
-        })
-    }
-
+        if (middleware.checkValidationRules(res, request, rules, message)) {
+            auth.signup(request, function (code, message, data) {
+                middleware.send_response(req, res, code, message, data);
+            })
+        }
+    })
 })
 
 router.post('/validate', function (req, res) {
@@ -51,22 +50,23 @@ router.post('/validate', function (req, res) {
 })
 
 router.post('/login', function (req, res) {
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
+        // var request = req.body;
+        var rules = {
+            email: 'required|email'
+        }
 
-    var rules = {
-        email: 'required|email'
-    }
+        var message = {
+            require: req.language.reset_keyword_required_message,
+            email: req.language.reset_keyword_invalid_email_message
+        }
 
-    var message = {
-        require: req.language.reset_keyword_required_message,
-        email: req.language.reset_keyword_invalid_email_message
-    }
-
-    if (middleware.checkValidationRules(res, request, rules, message)) {
-        auth.loginUser(request, function (code, message, data) {
-            middleware.send_response(req, res, code, message, data);
-        })
-    }
+        if (middleware.checkValidationRules(res, request, rules, message)) {
+            auth.loginUser(request, function (code, message, data) {
+                middleware.send_response(req, res, code, message, data);
+            })
+        }
+    })
 })
 
 router.post('/forgotpass', function (req, res) {

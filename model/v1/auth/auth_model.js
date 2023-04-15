@@ -116,8 +116,7 @@ var auth = {
         })
     },
 
-    forgotpassword: function (req, callback) {
-        var request = req.body;
+    forgotpassword: function (request, callback) {
         con.query(`SELECT * FROM tbl_user WHERE email = ? AND is_active = 1`, [request.email], function (error, result) {
             if (!error && result.length > 0) {
                 require('../../../config/template').forgotPass(result, function (forgottemplate) {

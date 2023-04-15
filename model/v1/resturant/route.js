@@ -4,7 +4,8 @@ var router = express.Router();
 var middleware = require('../../../middleware/validation');
 var multer = require('multer');
 var path = require('path');
-var auth = require('./resturant')
+var auth = require('./resturant');
+const { encryption } = require('../../../middleware/validation');
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -38,7 +39,7 @@ router.post('/uploadrestpicture', function (req, res) {
 
 
 router.post('/addresturant', function (req, res) {
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
     var rules = {
         name: 'required',
@@ -57,6 +58,8 @@ router.post('/addresturant', function (req, res) {
             middleware.send_response(req, res, code, message, data)
         })
     }
+
+})
 })
 
 router.get('/restuarantlisting', function (req, res) {
@@ -69,7 +72,7 @@ router.get('/restuarantlisting', function (req, res) {
 });
 
 router.post('/addreting', function (req, res) {
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
     var rules = {
         resturant_id: 'required',
@@ -86,9 +89,10 @@ router.post('/addreting', function (req, res) {
         })
     }
 })
+})
 
 router.post('/addfood',function(req,res){
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
     var rules = {
         restaurant_id:'required',
@@ -109,10 +113,12 @@ router.post('/addfood',function(req,res){
             middleware.send_response(req,res,code,message,data);
         })
     }
+
+})
 })
 
 router.post('/resdetail',function(req,res){
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
     var rules = {
         id: 'required'
@@ -127,16 +133,26 @@ router.post('/resdetail',function(req,res){
             middleware.send_response(req,res,code,message,data);
         })
     }
-
+    })
 })
 
 router.post('/search', function(req,res){
-    var request = req.body
+    middleware.decryption(req.body, function (request) {
+
     auth.searchItem(request,function(code,message,data){
         middleware.send_response(req,res,code,message,data);
     })
+})
 })
 
 
 
 module.exports = router;
+
+// Check api for encryption
+// add resturant
+// reasturant listing
+// add rating
+// add food
+// restaurant detail
+// search

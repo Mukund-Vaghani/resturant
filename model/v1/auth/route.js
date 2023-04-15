@@ -6,7 +6,6 @@ var multer = require('multer');
 var path = require('path');
 
 router.post('/signup', function (req, res) {
-
     middleware.decryption(req.body, function (request) {
         var rules = {
             login_type: 'required',
@@ -32,26 +31,26 @@ router.post('/signup', function (req, res) {
 })
 
 router.post('/validate', function (req, res) {
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
-    var rules = {
-        email: 'required'
-    }
+        var rules = {
+            email: 'required'
+        }
 
-    var message = {
-        require: req.language.reset_keyword_required_message
-    }
+        var message = {
+            require: req.language.reset_keyword_required_message
+        }
 
-    if (middleware.checkValidationRules(res, request, rules, message)) {
-        auth.validateUser(request, function (code, message, data) {
-            middleware.send_response(req, res, code, message, data);
-        })
-    }
+        if (middleware.checkValidationRules(res, request, rules, message)) {
+            auth.validateUser(request, function (code, message, data) {
+                middleware.send_response(req, res, code, message, data);
+            })
+        }
+    })
 })
 
 router.post('/login', function (req, res) {
     middleware.decryption(req.body, function (request) {
-        // var request = req.body;
         var rules = {
             email: 'required|email'
         }
@@ -70,8 +69,11 @@ router.post('/login', function (req, res) {
 })
 
 router.post('/forgotpass', function (req, res) {
-    auth.forgotpassword(req, function (code, message, data) {
-        middleware.send_response(req, res, code, message, data);
+    middleware.decryption(req.body, function (request) {
+
+        auth.forgotpassword(request, function (code, message, data) {
+            middleware.send_response(req, res, code, message, data);
+        })
     })
 })
 
@@ -112,10 +114,11 @@ router.post('/resetpass/:id', function (req, res) {
 })
 
 router.post("/logout", function (req, res) {
-    var request = req.body;
+    middleware.decryption(req.body, function (request) {
 
-    auth.logoutUser(request, function (code, message, data) {
-        middleware.send_response(req, res, code, message, data);
+        auth.logoutUser(request, function (code, message, data) {
+            middleware.send_response(req, res, code, message, data);
+        })
     })
 })
 
@@ -155,3 +158,9 @@ router.post('/uploadprofilepicture', function (req, res) {
 })
 
 module.exports = router;
+
+// encryption check
+// validate
+// signup
+// login
+// logout

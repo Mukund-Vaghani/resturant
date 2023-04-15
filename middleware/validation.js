@@ -5,7 +5,7 @@ const gu = require('../language/gu');
 var { t } = require('localizify');
 var con = require('../config/database');
 var cryptoLib = require('cryptlib')
-var shakey = cryptoLib.getHashSha256(process.env.KEY,32)
+var shakey = cryptoLib.getHashSha256(process.env.KEY, 32)
 
 var middleware = {
 
@@ -20,8 +20,10 @@ var middleware = {
                     code: '0',
                     message: error
                 }
-                res.status(200);
-                res.send(response_data);
+                middleware.encryption(response_data, function (response) {
+                    res.status(200);
+                    res.send(response);
+                })
                 return false;
             }
         } else {
@@ -36,9 +38,9 @@ var middleware = {
                     code: code,
                     message: trans_message
                 }
-                middleware.encryption(response_data, function(response){
+                middleware.encryption(response_data, function (response) {
                     res.status(200);
-                    res.send(response_data);
+                    res.send(response);
                 })
             } else {
                 console.log(data);
@@ -47,9 +49,9 @@ var middleware = {
                     message: trans_message,
                     data: data
                 }
-                middleware.encryption(response_data, function(response){
+                middleware.encryption(response_data, function (response) {
                     res.status(200);
-                    res.send(response_data);
+                    res.send(response);
                 })
             }
         })
@@ -77,78 +79,133 @@ var middleware = {
     validateApiKey: function (req, res, callback) {
         // bypass of api key
         var end_point = req.path.split('/');
-        var uni_end_point = new Array("resetform", "resetpass","restuarantlisting","rest")
+        var uni_end_point = new Array("resetform", "resetpass", "restuarantlisting", "rest")
 
         var api_key = (req.headers['api-key'] != undefined && req.headers['api-key'] != "") ? req.headers['api-key'] : "";
+
+
         if (uni_end_point.includes(end_point[end_point.length - 2])) {
             callback();
         } else {
-            if (api_key != "" && api_key == process.env.API_KEY) {
-                callback()
+
+            if (api_key != "") {
+                try {
+                    var dec_apikey = cryptoLib.decrypt(api_key, shakey, process.env.IV)
+                    if (dec_apikey != "" && dec_apikey == process.env.API_KEY) {
+                        callback()
+                    } else {
+                        var response_data = {
+                            code: '0',
+                            message: req.language.reset_keyword_invalid_user_api_message
+                        }
+                        middleware.encryption(response_data, function (response) {
+                            res.status(401);
+                            res.send(response);
+                        })
+                    }
+                } catch (error) {
+                    var response_data = {
+                        code: '0',
+                        message: req.language.reset_keyword_invalid_user_api_message
+                    }
+                    middleware.encryption(response_data, function (response) {
+                        res.status(401);
+                        res.send(response);
+                    })
+                }
             } else {
                 var response_data = {
                     code: '0',
                     message: req.language.reset_keyword_invalid_user_api_message
                 }
-                res.status(401);
-                res.send(response_data);
+                middleware.encryption(response_data, function (response) {
+                    res.status(401);
+                    res.send(response);
+                })
             }
         }
     },
 
     validateUserToken: function (req, res, callback) {
         var end_point = req.path.split('/');
-        var uni_end_point = new Array("login", "signup","validate","resetform", "resetpass","addresturant","addfood");
+        var uni_end_point = new Array("login", "signup", "validate", "resetform", "resetpass", "addresturant", "addfood");
 
         var valid_token = (req.headers['token'] != undefined && req.headers['token'] != "") ? req.headers['token'] : "";
 
-        // console.log(valid_token);
         // console.log(uni_end_point.indexOf(end_point[4])=='-1');
         if (uni_end_point.includes(end_point[4])) {
             callback();
         } else {
             if (valid_token != "") {
-                con.query(`SELECT * FROM tbl_user_deviceinfo WHERE token = ?`, [valid_token], function (error, result) {
-                    if (!error && result.length > 0) {
-                        req.user_id = result[0].user_id;
-                        callback()
+                try {
+                    var dec_token = cryptoLib.decrypt(valid_token, shakey, process.env.IV)
+                    console.log(dec_token);
+                    if (dec_token != "") {
+                        con.query(`SELECT * FROM tbl_user_deviceinfo WHERE token = ?`, [dec_token], function (error, result) {
+                            if (!error && result.length > 0) {
+                                req.user_id = result[0].user_id;
+                                callback()
+                            } else {
+                                var response_data = {
+                                    code: '0',
+                                    message: req.language.reset_keyword_invalid_user_message
+                                }
+                                middleware.encryption(response_data, function (response) {
+                                    res.status(401);
+                                    res.send(response);
+                                })
+                            }
+                        })
                     } else {
                         var response_data = {
                             code: '0',
                             message: req.language.reset_keyword_invalid_user_message
                         }
-                        res.status(401);
-                        res.send(response_data);
+                        middleware.encryption(response_data, function (response) {
+                            res.status(401);
+                            res.send(response);
+                        })
                     }
-                })
+                } catch (error) {
+                    var response_data = {
+                        code: '0',
+                        message: req.language.reset_keyword_invalid_user_message
+                    }
+                    middleware.encryption(response_data, function (response) {
+                        res.status(401);
+                        res.send(response);
+                    })
+                }
             } else {
                 var response_data = {
                     code: '0',
                     message: req.language.reset_keyword_invalid_user_message
                 }
-                res.status(401);
-                res.send(response_data);
+                middleware.encryption(response_data, function (response) {
+                    res.status(401);
+                    res.send(response);
+                })
             }
         }
     },
 
 
-    decryption: function(req,callback){
-        if(req != undefined && Object.keys(req).length !== 0){
-            try{
-                var request = JSON.parse(cryptoLib.decrypt(req,shakey,process.env.IV));
+    decryption: function (req, callback) {
+        if (req != undefined && Object.keys(req).length !== 0) {
+            try {
+                var request = JSON.parse(cryptoLib.decrypt(req, shakey, process.env.IV));
                 request.lang = req.lang;
                 callback(request);
-            }catch{
+            } catch {
                 callback({});
             }
-        }else{
+        } else {
             callback({});
         }
     },
 
-    encryption: function(req,callback){
-        var response = cryptoLib.encrypt(JSON.stringify(response_data),shakey,process.env.IV);
+    encryption: function (response_data, callback) {
+        var response = cryptoLib.encrypt(JSON.stringify(response_data), shakey, process.env.IV);
         callback(response);
     }
 
